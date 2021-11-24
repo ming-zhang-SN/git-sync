@@ -120,14 +120,6 @@ $(OUTBIN): .go/$(OUTBIN).stamp
 # Used to track state in hidden files.
 DOTFILE_IMAGE = $(subst /,_,$(IMAGE))-$(TAG)
 
-LICENSES = .licenses
-
-$(LICENSES): bin/$(shell go env GOOS)_$(shell go env GOARCH)/$(BIN)
-	@go build -o ./bin/tools github.com/google/go-licenses
-	@rm -rf $(LICENSES)
-	@./bin/tools/go-licenses save ./... --save_path=$(LICENSES)
-	@chmod -R a+rx $(LICENSES)
-
 container: .container-$(DOTFILE_IMAGE) container-name
 .container-$(DOTFILE_IMAGE): bin/$(OS)_$(ARCH)/$(BIN) $(LICENSES) Dockerfile.in
 	@sed \

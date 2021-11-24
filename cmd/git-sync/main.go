@@ -63,6 +63,8 @@ var flDepth = pflag.Int("depth", envInt("GIT_SYNC_DEPTH", 0),
 	"create a shallow clone with history truncated to the specified number of commits")
 var flSubmodules = pflag.String("submodules", envString("GIT_SYNC_SUBMODULES", "recursive"),
 	"git submodule behavior: one of 'recursive', 'shallow', or 'off'")
+var flSubmodulesRemote = pflag.Bool("submodules", envBool("GIT_SYNC_SUBMODULES_REMOTE", false),
+	"git submodule behavior: one of 'true' or 'false'")
 
 var flRoot = pflag.String("root", envString("GIT_SYNC_ROOT", ""),
 	"the root directory for git-sync operations, under which --link will be created")
@@ -275,6 +277,7 @@ type repoSync struct {
 	rev         string         // the rev or SHA to sync
 	depth       int            // for shallow sync
 	submodules  submodulesMode // how to handle submodules
+	submoduleRemote  bool      // how to handle submodules sync
 	chmod       int            // mode to change repo to, or 0
 	link        string         // the name of the symlink to publish under `root`
 	authURL     string         // a URL to re-fetch credentials, or ""
@@ -473,6 +476,7 @@ func main() {
 		rev:         *flRev,
 		depth:       *flDepth,
 		submodules:  submodulesMode(*flSubmodules),
+		submoduleRemote: *flSubmodulesRemote,
 		chmod:       *flChmod,
 		link:        *flLink,
 		authURL:     *flAskPassURL,
@@ -989,6 +993,9 @@ func (git *repoSync) AddWorktreeAndSwap(ctx context.Context, hash string) error 
 	if git.submodules != submodulesOff {
 		git.log.V(0).Info("updating submodules")
 		submodulesArgs := []string{"submodule", "update", "--init"}
+		if git.submoduleRemote {
+			submodulesArgs = append(submodulesArgs, "--remote")
+		}
 		if git.submodules == submodulesRecursive {
 			submodulesArgs = append(submodulesArgs, "--recursive")
 		}
